@@ -1,0 +1,34 @@
+{
+  "name": "time.js",
+  "version": "1.0.0",
+  "description": "A small javascript utility for doing various time and time related things",
+  "main": "dist/time.js",
+  "scripts": {
+    "test": "mocha test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/JavascriptFTW/timejs.git"
+  },
+  "keywords": [
+    "Time",
+    "JavaScript",
+    "Timing"
+  ],
+  "author": "Joshua Gammage",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/JavascriptFTW/timejs/issues"
+  },
+  "homepage": "https://github.com/JavascriptFTW/timejs#readme",
+  "devDependencies": {
+    "babel-preset-es2015": "^6.3.13",
+    "browserify": "^13.0.0",
+    "gulp": "^3.9.0",
+    "gulp-babel": "^6.1.1",
+    "gulp-uglify": "^1.5.1",
+    "mocha": "^2.3.4",
+    "vinyl-buffer": "^1.0.0",
+    "vinyl-source-stream": "^1.1.0"
+  }
+}
