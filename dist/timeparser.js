@@ -6,6 +6,7 @@
  * @version 1.0.0
  */
 
+var _ = require("underscore");
 var timeunits = require("./timeunits.js");
 var timetokenizer = require("./timetokenizer.js");
 
