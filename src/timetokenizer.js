@@ -226,21 +226,34 @@ var timetokenizer = {
         this.time = time;
                 
         let tokens = [];
+        // Keep track of the whitespace we've "ignored"
+        let whitespace = "";
         
         while (!this.end()) {
-            let charCode = this.time.charCodeAt(this.index);
+            let charCode = this.time.charCodeAt(this.ind);
             
             if (this.isWhitespace(charCode)) {
+                whitespace += this.time[this.ind];
                 ++this.ind;
                 continue;
             }
             
+            let token;
+            
             if (this.canBeginNum(charCode,
                 this.time.charCodeAt(this.ind + 1))) {
-                tokens.push(this.parseNum());
+                token = this.parseNum();
             } else {
-                tokens.push(this.parseWord());
+                token = this.parseWord();
             }
+            
+            // Add our whitespace to the token and adjust its start and raw
+            // content accordingly
+            token.start -= whitespace.length;
+            token.raw = whitespace + token.raw;
+            whitespace = "";
+            
+            tokens.push(token);
         }
         
         return tokens;
