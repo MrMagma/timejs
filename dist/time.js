@@ -21,7 +21,7 @@ function makeAliasGetter(name) {
 }
 
 var time = {
-    defaultFormat: ":(year) :(month) :(week) :(day) :(hour) :(minute) :(second) :(millisecond)",
+    defaultFormat: "yr* m* wk* day* hr* min* sec* ms*",
     /**
      * @description Adds one or more lengths of time together and returns the
        resulting time length using the same format as the first time supplied.
@@ -122,58 +122,20 @@ var time = {
         var base = _data$base === undefined ? "millisecond" : _data$base;
         var name = data.name;
         var scale = data.scale;
-        var aliases = data.aliases;
         // Make sure that the data we've been passed is kosher and doesn't
         // already exist
 
-        if (!_.isNumber(units[base]) || _.isNaN(units[base]) || !_.isNumber(scale) || _.isNaN(scale) || !_.isString(name) && !units[name]) {
+        if (!_.isNumber(units[base]) || _.isNaN(units[base]) || !_.isNumber(scale) || _.isNaN(scale) || !_.isString(name) || units.hasOwnProperty(name)) {
             return;
         }
 
-        units[name] = units[base] * scale;
+        units[name] = {
+            base: base,
+            scale: scale
+        };
 
-        // If aliases is not an array then someone's being annoying so stop
-        // them
-        if (!_.isArray(aliases)) {
-            aliases = [];
-        }
-
-        // Filter out any aliases that we can't use (non-string, name already
-        // exists, starts with a number)
-        aliases = aliases.filter(function (alias) {
-            return _.isString(alias) && !units[alias] && !alias.match(/^[0-9]/);
-        });
-
-        var getter = makeAliasGetter(name);
-
-        // Define our getter on every alias, and noop the setter
-        var _iteratorNormalCompletion = true;
-        var _didIteratorError = false;
-        var _iteratorError = undefined;
-
-        try {
-            for (var _iterator = aliases[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-                var alias = _step.value;
-
-                Object.defineProperty(units, alias, {
-                    get: getter,
-                    set: noop
-                });
-            }
-        } catch (err) {
-            _didIteratorError = true;
-            _iteratorError = err;
-        } finally {
-            try {
-                if (!_iteratorNormalCompletion && _iterator.return) {
-                    _iterator.return();
-                }
-            } finally {
-                if (_didIteratorError) {
-                    throw _iteratorError;
-                }
-            }
-        }
+        // Add our aliases
+        this.addAlias(data);
     },
 
     /**
@@ -204,19 +166,22 @@ var time = {
         // simplicity
         aliases.push(alias);
 
+        // Filter out any aliases that we can't use (non-string, name already
+        // exists, starts with a number)
         aliases = aliase.fiter(function (aliasName) {
             return _.isString(aliasName) && !units[aliasName] && !aliasName.match(/^[0-9]/);
         });
 
         var getter = makeAliasGetter(name);
 
-        var _iteratorNormalCompletion2 = true;
-        var _didIteratorError2 = false;
-        var _iteratorError2 = undefined;
+        // Define our getter on every alias, and noop the setter
+        var _iteratorNormalCompletion = true;
+        var _didIteratorError = false;
+        var _iteratorError = undefined;
 
         try {
-            for (var _iterator2 = aliases[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
-                var aliasName = _step2.value;
+            for (var _iterator = aliases[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+                var aliasName = _step.value;
 
                 Object.defineProperty(units, aliasName, {
                     get: getter,
@@ -224,27 +189,91 @@ var time = {
                 });
             }
         } catch (err) {
-            _didIteratorError2 = true;
-            _iteratorError2 = err;
+            _didIteratorError = true;
+            _iteratorError = err;
         } finally {
             try {
-                if (!_iteratorNormalCompletion2 && _iterator2.return) {
-                    _iterator2.return();
+                if (!_iteratorNormalCompletion && _iterator.return) {
+                    _iterator.return();
                 }
             } finally {
-                if (_didIteratorError2) {
-                    throw _iteratorError2;
+                if (_didIteratorError) {
+                    throw _iteratorError;
                 }
             }
         }
     }
 };
 
+time.addAlias({
+    name: "millisecond",
+    aliases: ["milliseconds", "ms", "millis"]
+});
+
 time.defineUnit({
     name: "second",
     base: "millisecond",
     scale: 1000,
-    aliases: ["s", "sec"]
+    aliases: ["seconds", "sec", "s"]
+});
+
+time.defineUnit({
+    name: "minute",
+    base: "second",
+    scale: 60,
+    aliases: ["minutes", "min", "m"]
+});
+
+time.defineUnit({
+    name: "hour",
+    base: "minute",
+    scale: 60,
+    aliases: ["hours", "hrs", "hr", "h"]
+});
+
+time.defineUnit({
+    name: "day",
+    base: "hour",
+    scale: 24,
+    aliases: ["days", "d"]
+});
+
+// This is the point where units will most likely be useless 90% of the time
+time.defineUnit({
+    name: "week",
+    base: "day",
+    scale: 7,
+    aliases: ["weeks", "wks", "wk", "w"]
+});
+
+time.defineUnit({
+    name: "year",
+    base: "day",
+    scale: 365.25,
+    aliases: ["years", "yrs", "yr", "y"]
+});
+
+time.defineUnit({
+    name: "decade",
+    base: "year",
+    scale: 10,
+    aliases: ["decades"]
+});
+
+time.defineUnit({
+    name: "century",
+    base: "year",
+    scale: 100,
+    aliases: ["centuries"]
+});
+
+// If anyone actually uses this unit for something practical I will give them
+// an honorable mention and a cookie.
+time.defineUnit({
+    name: "millenium",
+    base: "year",
+    scale: 1000,
+    aliases: ["millenia"]
 });
 
 /* 
