@@ -7,18 +7,7 @@
  */
 
 var _ = require("underscore");
-
-var units = {
-    millisecond: 1
-};
-
-function noop() {}
-
-function makeAliasGetter(name) {
-    return function () {
-        return units[name];
-    };
-}
+var timeunits = require("./timeunits.js");
 
 var time = {
     defaultFormat: "yr* m* wk* day* hr* min* sec* ms*",
@@ -106,132 +95,36 @@ var time = {
        other
      * @contributors Joshua Gammage
      */
-    subtract: function subtract() {},
-
-    /**
-     * @description Defines a new time unit for use in time strings
-     * @param {object} data - Contains data about the time unit, its name,
-       its aliases, the base unit, and what factor it scales the base unit by
-     * @contributors Joshua Gammage
-     */
-    defineUnit: function defineUnit(data) {
-        if (!_.isObject(data)) {
-            return;
-        }
-        var _data$base = data.base;
-        var base = _data$base === undefined ? "millisecond" : _data$base;
-        var name = data.name;
-        var scale = data.scale;
-        // Make sure that the data we've been passed is kosher and doesn't
-        // already exist
-
-        if (!_.isNumber(units[base]) || _.isNaN(units[base]) || !_.isNumber(scale) || _.isNaN(scale) || !_.isString(name) || units.hasOwnProperty(name)) {
-            return;
-        }
-
-        units[name] = {
-            base: base,
-            scale: scale
-        };
-
-        // Add our aliases
-        this.addAlias(data);
-    },
-
-    /**
-     * @description Adds a new alias or list of aliases for a specific time
-       value
-     * @param {object} data - Contains the alias(es) to add and the unit to add
-       them to
-     * @contributors Joshua Gammage
-     */
-    addAlias: function addAlias(data) {
-        if (!_.isObject(data)) {
-            return;
-        }
-        var name = data.name;
-        var alias = data.alias;
-        var aliases = data.aliases;
-
-        if (!units[name]) {
-            return;
-        }
-
-        // Make sure that aliases is an array for simplicity
-        if (!_.isArray(aliases)) {
-            aliases = [];
-        }
-
-        // Push alias (whether it be defined or not) to aliases. Also for
-        // simplicity
-        aliases.push(alias);
-
-        // Filter out any aliases that we can't use (non-string, name already
-        // exists, starts with a number)
-        aliases = aliase.fiter(function (aliasName) {
-            return _.isString(aliasName) && !units[aliasName] && !aliasName.match(/^[0-9]/);
-        });
-
-        var getter = makeAliasGetter(name);
-
-        // Define our getter on every alias, and noop the setter
-        var _iteratorNormalCompletion = true;
-        var _didIteratorError = false;
-        var _iteratorError = undefined;
-
-        try {
-            for (var _iterator = aliases[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-                var aliasName = _step.value;
-
-                Object.defineProperty(units, aliasName, {
-                    get: getter,
-                    set: noop
-                });
-            }
-        } catch (err) {
-            _didIteratorError = true;
-            _iteratorError = err;
-        } finally {
-            try {
-                if (!_iteratorNormalCompletion && _iterator.return) {
-                    _iterator.return();
-                }
-            } finally {
-                if (_didIteratorError) {
-                    throw _iteratorError;
-                }
-            }
-        }
-    }
+    subtract: function subtract() {}
 };
 
-time.addAlias({
+timeunits.addAlias({
     name: "millisecond",
     aliases: ["milliseconds", "ms", "millis"]
 });
 
-time.defineUnit({
+timeunits.define({
     name: "second",
     base: "millisecond",
     scale: 1000,
     aliases: ["seconds", "sec", "s"]
 });
 
-time.defineUnit({
+timeunits.define({
     name: "minute",
     base: "second",
     scale: 60,
     aliases: ["minutes", "min", "m"]
 });
 
-time.defineUnit({
+timeunits.define({
     name: "hour",
     base: "minute",
     scale: 60,
     aliases: ["hours", "hrs", "hr", "h"]
 });
 
-time.defineUnit({
+timeunits.define({
     name: "day",
     base: "hour",
     scale: 24,
@@ -239,28 +132,28 @@ time.defineUnit({
 });
 
 // This is the point where units will most likely be useless 90% of the time
-time.defineUnit({
+timeunits.define({
     name: "week",
     base: "day",
     scale: 7,
     aliases: ["weeks", "wks", "wk", "w"]
 });
 
-time.defineUnit({
+timeunits.define({
     name: "year",
     base: "day",
     scale: 365.25,
     aliases: ["years", "yrs", "yr", "y"]
 });
 
-time.defineUnit({
+timeunits.define({
     name: "decade",
     base: "year",
     scale: 10,
     aliases: ["decades"]
 });
 
-time.defineUnit({
+timeunits.define({
     name: "century",
     base: "year",
     scale: 100,
@@ -269,7 +162,7 @@ time.defineUnit({
 
 // If anyone actually uses this unit for something practical I will give them
 // an honorable mention and a cookie.
-time.defineUnit({
+timeunits.define({
     name: "millenium",
     base: "year",
     scale: 1000,
