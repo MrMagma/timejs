@@ -13,7 +13,7 @@ var units = {
 function noop() {}
 
 function makeAliasGetter(name) {
-    return () => units[name]
+    return () => units[name];
 }
 
 var time = {
@@ -164,7 +164,7 @@ var time = {
         // Filter out any aliases that we can't use (non-string, name already
         // exists, starts with a number)
         aliases = aliase.fiter(aliasName => (_.isString(aliasName) &&
-            !units[aliasName] && !aliasName.match(/^[0-9]/)))
+            !units[aliasName] && !aliasName.match(/^[0-9]/)));
         
         var getter = makeAliasGetter(name);
         
@@ -181,7 +181,7 @@ var time = {
 time.addAlias({
     name: "millisecond",
     aliases: ["milliseconds", "ms", "millis"]
-})
+});
 
 time.defineUnit({
     name: "second",
