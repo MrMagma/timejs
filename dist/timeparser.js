@@ -14,17 +14,22 @@ var timeparser = {
     /**
      * @description Parses a time string into an AST-ish representation for
        easier use in code
-     * @param {string} time - The time to be parse
+     * @param {string|array} time - The time string or array of tokens to be
+       parsed
      * @returns {object} The time "AST" that was generated
      * @contributors Joshua Gammage
      */
 
     parse: function parse(time) {
-        if (!_.isString(time)) {
-            return { error: true };
+        if (!_.isString(time) && !_.isArray(time)) {
+            return new Error("Invalid argument supplied to timeparser.parse");
         }
 
-        var tokens = timetokenizer.tokenize(time);
+        var tokens = time;
+
+        if (!_.isArray(tokens)) {
+            tokens = timetokenizer.tokenize(time);
+        }
 
         var nodes = [];
 
@@ -32,21 +37,28 @@ var timeparser = {
             var token = tokens.shift();
 
             if (token.type === "word") {
-                if (nodes.length > 0 && nodes[nodes.length - 1].type === "TimeUnit") {
-                    var token2 = nodes[nodes.length - 1];
-                    if (token.value === "*" && !token2.optional && token.start === token2.end + 1) {
-                        token2.end = token.end;
-                        token2.optional = true;
-                    } else if (token2.unit.length === 0) {
-                        token2.unit = token.value;
-                        token2.end = token.end;
-                    }
+                if (token.value.match(/^\{.+\}$/)) {
+                    var tMatch = /^\{(.+?)(\*|)\}$/.exec(token.value);
+                    nodes.push({
+                        type: "Placeholder",
+                        start: token.start,
+                        end: token.end,
+                        raw: token.raw,
+                        unit: tMatch[1],
+                        optional: tMatch[2] === "*"
+                    });
+                } else if (nodes.length > 0 && nodes[nodes.length - 1].type === "TimeUnit" && nodes[nodes.length - 1].unit.length === 0) {
+                    var pToken = nodes[nodes.length - 1];
+                    pToken.unit = token.value;
+                    pToken.end = token.end;
+                    pToken.raw += token.raw;
                 } else {
                     nodes.push({
                         type: "Word",
                         start: token.start,
                         end: token.end,
-                        value: token.value
+                        value: token.value,
+                        raw: token.raw
                     });
                 }
             } else if (token.type === "number") {
@@ -55,8 +67,8 @@ var timeparser = {
                     end: token.end,
                     value: token.value,
                     unit: "",
-                    optional: false,
-                    type: "TimeUnit"
+                    type: "TimeUnit",
+                    raw: token.raw
                 });
             }
         }

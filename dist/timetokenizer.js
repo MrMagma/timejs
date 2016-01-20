@@ -215,7 +215,7 @@ var timetokenizer = {
         var start = this.ind;
         var word = "";
 
-        while (!this.isWhitespace() && !this.end()) {
+        while (!this.isWhitespace(this.time.charCodeAt(this.ind)) && !this.end()) {
             word += this.time[this.ind];
             ++this.ind;
         }
