@@ -102,7 +102,7 @@ var time = {
     }
 };
 
-timeunits.addAlias({
+timeunits.update({
     name: "millisecond",
     aliases: ["milliseconds", "ms", "millis"]
 });

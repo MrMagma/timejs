@@ -98,7 +98,7 @@ var time = {
     subtract: function subtract() {}
 };
 
-timeunits.addAlias({
+timeunits.update({
     name: "millisecond",
     aliases: ["milliseconds", "ms", "millis"]
 });
