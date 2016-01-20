@@ -6,15 +6,18 @@
 
 var _ = require("underscore");
 
-var timetokenizer = {
+var dat = {
     time: "",
-    ind: 0,
+    ind: 0
+};
+
+var timetokenizer = {
     /**
      * @description Resets the tokenizer
      * @contributors Joshua Gammage
      */
     reset() {
-        this.ind = 0;
+        dat.ind = 0;
     },
     /**
      * @description Utility method for determining whether parsing should be
@@ -24,7 +27,7 @@ var timetokenizer = {
      * @contributors Joshua Gammage
      */
     end() {
-        return this.ind >= this.time.length;
+        return dat.ind >= dat.time.length;
     },
     /**
      * @description A utility method for finding whether or not a specific
@@ -88,10 +91,10 @@ var timetokenizer = {
     parseDecStart() {
         var decStart = "";
         
-        while (!this.end() && this.isDecDigit(this.time.charCodeAt(this.ind)) &&
-            this.time[this.ind] !== ".") {
-            decStart += this.time[this.ind];
-            ++this.ind;
+        while (!this.end() && this.isDecDigit(dat.time.charCodeAt(dat.ind)) &&
+            dat.time[dat.ind] !== ".") {
+            decStart += dat.time[dat.ind];
+            ++dat.ind;
         }
         
         return decStart;
@@ -107,18 +110,18 @@ var timetokenizer = {
         let decEnd = "";
         
         while (!this.end() &&
-            (this.isDecDigit(this.time.charCodeAt(this.ind)) ||
-                this.time[this.ind] === ".")) {
-            decEnd += this.time[this.ind];
-            ++this.ind;
+            (this.isDecDigit(dat.time.charCodeAt(dat.ind)) ||
+                dat.time[dat.ind] === ".")) {
+            decEnd += dat.time[dat.ind];
+            ++dat.ind;
         }
         
-        let charCode2 = this.time.charCodeAt(this.ind + 1);
+        let charCode2 = dat.time.charCodeAt(dat.ind + 1);
         
-        if (["e", "E"].indexOf(this.time[this.ind]) >= 0 &&
+        if (["e", "E"].indexOf(dat.time[dat.ind]) >= 0 &&
             (this.isSign(charCode2) || this.isDecDigit(charCode2))) {
-            decEnd += this.time[this.ind++];
-            decEnd += this.time[this.ind++];
+            decEnd += dat.time[dat.ind++];
+            decEnd += dat.time[dat.ind++];
             decEnd += this.parseDecStart();
         }
         
@@ -134,7 +137,7 @@ var timetokenizer = {
      * @contributors Joshua Gammage
      */
     parseDecNum() {
-        let start = this.ind;
+        let start = dat.ind;
         let value = this.parseDecStart() + this.parseDecEnd();
         
         return {
@@ -143,7 +146,7 @@ var timetokenizer = {
             raw: value,
             value: Number(value),
             start: start,
-            end: this.ind
+            end: dat.ind
         };
     },
     /**
@@ -156,17 +159,17 @@ var timetokenizer = {
      * @contributors Joshua Gammage
      */
     parseSpecNum(startStr, legalDigits) {
-        let start = this.ind;
+        let start = dat.ind;
         let value = startStr;
         
-        this.ind += value.length;
+        dat.ind += value.length;
         
         while (!this.end()) {
-            let char = this.time[this.ind];
+            let char = dat.time[dat.ind];
             
             if (legalDigits.indexOf(char.toLowerCase()) >= 0) {
                 value += char;
-                ++this.ind;
+                ++dat.ind;
             } else {
                 break;
             }
@@ -178,7 +181,7 @@ var timetokenizer = {
             raw: value,
             value: Number(value),
             start: start,
-            end: this.ind
+            end: dat.ind
         };
     },
     /**
@@ -187,8 +190,8 @@ var timetokenizer = {
      * @contributors Joshua Gammage
      */
     parseNum() {
-        if (this.time[this.ind] === "0") {
-            let next = this.time[this.ind + 1];
+        if (dat.time[dat.ind] === "0") {
+            let next = dat.time[dat.ind + 1];
             
             if (next === "x" || next === "X") {
                 return this.parseSpecNum("0" + next, [
@@ -215,13 +218,13 @@ var timetokenizer = {
      * @contributors Joshua Gammage
      */
     parseWord() {
-        let start = this.ind;
+        let start = dat.ind;
         let word = "";
         
-        while (!this.isWhitespace(this.time.charCodeAt(this.ind)) &&
+        while (!this.isWhitespace(dat.time.charCodeAt(dat.ind)) &&
             !this.end()) {
-            word += this.time[this.ind];
-            ++this.ind;
+            word += dat.time[dat.ind];
+            ++dat.ind;
         }
         
         return {
@@ -229,7 +232,7 @@ var timetokenizer = {
             raw: word,
             value: word,
             start: start,
-            end: this.ind
+            end: dat.ind
         };
     },
     /**
@@ -245,25 +248,25 @@ var timetokenizer = {
         }
         
         this.reset();
-        this.time = time;
+        dat.time = time;
                 
         let tokens = [];
         // Keep track of the whitespace we've "ignored"
         let whitespace = "";
         
         while (!this.end()) {
-            let charCode = this.time.charCodeAt(this.ind);
+            let charCode = dat.time.charCodeAt(dat.ind);
             
             if (this.isWhitespace(charCode)) {
-                whitespace += this.time[this.ind];
-                ++this.ind;
+                whitespace += dat.time[dat.ind];
+                ++dat.ind;
                 continue;
             }
             
             let token;
             
             if (this.canBeginNum(charCode,
-                this.time.charCodeAt(this.ind + 1))) {
+                dat.time.charCodeAt(dat.ind + 1))) {
                 token = this.parseNum();
             } else {
                 token = this.parseWord();
@@ -281,5 +284,9 @@ var timetokenizer = {
         return tokens;
     }
 };
+
+if (Object.freeze) {
+    Object.freeze(timetokenizer);
+}
 
 module.exports = timetokenizer;
