@@ -31,7 +31,7 @@ var timeparser = {
             if (token.type === "word") {
                 if (nodes.length > 0 &&
                     nodes[nodes.length - 1].type === "TimeUnit") {
-                    let token2 = ast.body[nodes.length - 1];
+                    let token2 = nodes[nodes.length - 1];
                     if (token.value === "*" && !token2.optional &&
                         token.start === token2.end + 1) {
                         token2.end = token.end;

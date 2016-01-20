@@ -76,7 +76,8 @@ var timetokenizer = {
     parseDecStart() {
         var decStart = "";
         
-        while (!this.end() && this.time[this.ind] !== ".") {
+        while (!this.end() && this.isDecDigit(this.time.charCodeAt(this.ind)) &&
+            this.time[this.ind] !== ".") {
             decStart += this.time[this.ind];
             ++this.ind;
         }
@@ -91,9 +92,11 @@ var timetokenizer = {
      * @contributors Joshua Gammage
      */
     parseDecEnd() {
-        let decEnd = this.time[this.ind++];
+        let decEnd = "";
         
-        while (!this.end() && this.isDecDigit(this.time.charCodeAt(this.ind))) {
+        while (!this.end() &&
+            (this.isDecDigit(this.time.charCodeAt(this.ind)) ||
+                this.time[this.ind] === ".")) {
             decEnd += this.time[this.ind];
             ++this.ind;
         }
