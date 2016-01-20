@@ -4,6 +4,8 @@
  * @version 1.0.0
  */
 
+var _ = require("underscore");
+
 var timetokenizer = {
     time: "",
     ind: 0,
@@ -41,8 +43,8 @@ var timetokenizer = {
                 0x202F, 0x205F, 0x3000, 0xFEFF].indexOf(charCode) >= 0));
     },
     /**
-     * @description Converts a time string to an array of tokens for easier
-       manipulation
+     * @description Utility method to determine whether a given character code
+       represents a digit (0-9)
      * @param {number} charCode - The character code to be checked
      * @returns {boolean} Whether or not the supplied character code represents
        a whitespace character
@@ -50,6 +52,17 @@ var timetokenizer = {
      */
     isDecDigit(charCode) {
         return (charCode >= 48 && charCode <= 57);
+    },
+    /**
+     * @description Utilitiy method for finding whether or not a given character
+       code represents a sign ("+" or "-")
+     * @param {number} charCode - The character code to be checked
+     * @returns {boolean} Whether or not the supplied character code represents
+       a whitespace character
+     * @contributors Joshua Gammage
+     */
+    isSign(charCode) {
+        return (charCode === 43) || (charCode === 45);
     },
     /**
      * @description Utility method to determine whether a sequence of two
@@ -63,8 +76,7 @@ var timetokenizer = {
      * @contributors Joshua Gammage
      */
     canBeginNum(charCode, charCode2) {
-        return (charCode === 43) || (charCode === 45) ||
-            this.isDecDigit(charCode) ||
+        return this.isSign(charCode) || this.isDecDigit(charCode) ||
             (charCode === 46 && this.isDecDigit(charCode2));
     },
     /**
@@ -101,7 +113,11 @@ var timetokenizer = {
             ++this.ind;
         }
         
-        if (["e", "E"].indexOf(this.time[this.ind]) >= 0) {
+        let charCode2 = this.time.charCodeAt(this.ind + 1);
+        
+        if (["e", "E"].indexOf(this.time[this.ind]) >= 0 &&
+            (this.isSign(charCode2) || this.isDecDigit(charCode2))) {
+            decEnd += this.time[this.ind++];
             decEnd += this.time[this.ind++];
             decEnd += this.parseDecStart();
         }
@@ -119,9 +135,7 @@ var timetokenizer = {
      */
     parseDecNum() {
         let start = this.ind;
-        let value = this.parseDecStart();
-        
-        value += this.parseDecEnd();
+        let value = this.parseDecStart() + this.parseDecEnd();
         
         return {
             base: 10,
@@ -129,7 +143,7 @@ var timetokenizer = {
             raw: value,
             value: Number(value),
             start: start,
-            end: this.ind - 1
+            end: this.ind
         };
     },
     /**
@@ -148,9 +162,9 @@ var timetokenizer = {
         this.ind += value.length;
         
         while (!this.end()) {
-            let char = this.time[ind].toLowerCase();
+            let char = this.time[this.ind];
             
-            if (legalDigits.indexOf(char) >= 0) {
+            if (legalDigits.indexOf(char.toLowerCase()) >= 0) {
                 value += char;
                 ++this.ind;
             } else {
@@ -164,7 +178,7 @@ var timetokenizer = {
             raw: value,
             value: Number(value),
             start: start,
-            end: this.ind - 1
+            end: this.ind
         };
     },
     /**
@@ -214,7 +228,7 @@ var timetokenizer = {
             raw: word,
             value: word,
             start: start,
-            end: this.ind - 1
+            end: this.ind
         };
     },
     /**
@@ -225,6 +239,10 @@ var timetokenizer = {
      * @contributors Joshua Gammage
      */
     tokenize(time) {
+        if (!_.isString(time)) {
+            return new Error("Invalid first argument. Must be of type 'string'");
+        }
+        
         this.reset();
         this.time = time;
                 
