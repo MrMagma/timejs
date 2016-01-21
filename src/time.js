@@ -8,7 +8,7 @@ var _ = require("underscore");
 var timeunits = require("./timeunits.js");
 
 var time = {
-    defaultFormat: "yr* m* wk* day* hr* min* sec* ms*",
+    defaultFormat: "{yr*} {m*} {wk*} {day*} {hr*} {min*} {sec*} {ms*}",
     /**
      * @description Adds one or more lengths of time together and returns the
        resulting time length using the same format as the first time supplied.
