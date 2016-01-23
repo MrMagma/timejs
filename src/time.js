@@ -6,9 +6,85 @@
 
 var _ = require("underscore");
 var timeunits = require("./timeunits.js");
+var timeparser = require("./timeparser.js");
+
+let regexes = {
+    number: /[\+\-]{0,1}(?:[0-9]*\.[0-9]+|[0-9]+)(?:e[\+\-]{0,1}[0-9]*|)/
+};
+
+class Format {
+    constructor(cfg = {}) {
+        let {regex, references = []} = cfg;
+        this.regex = new RegExp(regex);
+        this.raw = regex;
+        this.references = references;
+    }
+    unformat(str) {
+        let match = str.match(this.regex);
+        // For some reason Babel doesn't like if we name this variable "format"
+        let formatData = {};
+        
+        if (match !== null) {
+            for (let i = 0; i < this.references.length; i++) {
+                formatData[this.references[i]] = match[i + 1];
+            }
+        }
+        
+        return formatData;
+    }
+    format() {
+        
+    }
+    static create(ast) {
+        let regex = "";
+        let references = [];
+        
+        for (let node of ast.body) {
+            if (node.type === "StringLiteral" ||
+                node.type === "IntegerLiteral") {
+                regex += escapeRegexChars(node.value);
+            } else if (node.type === "NamedReference") {
+                regex += `(${regexes.number.source})`;
+                references.push(node.reference);
+            } else if (node.type === "ConditionalStatement") {
+                let conseqCapture = Format.create(node.consequent);
+                let altCapture = Format.create(node.alternate);
+                
+                regex += `(?:${conseqCapture.raw}|${altCapture.raw})`;
+                references = references.concat(conseqCapture.references)
+                    .concat(altCapture.references);
+            } else if (node.type === "TemplateBlock") {
+                let capture = Format.create(node);
+                regex += capture.raw;
+                references = references.concat(capture.references);
+            }
+        }
+        
+        return new Format({
+            regex: regex,
+            references: references
+        });
+    }
+}
+
+function escapeRegexChars(str) {
+    return str.replace(/\\|\^|\$|\*|\+|\?|\.|\(|\)|\:|\=|\!|\||\{|\}|\,|\[|\]/,
+        "\\$&");
+}
+
+var defaultFormat = timeparser.parse("{IF yr THEN yr ELSE ''} {IF m then m else ''}");
+
+var defaultCapture = Format.create(defaultFormat);
+
+console.log(defaultCapture.unformat("2 .35e-7"));
 
 var time = {
-    defaultFormat: "{yr*} {m*} {wk*} {day*} {hr*} {min*} {sec*} {ms*}",
+    get defaultFormat() {
+        return JSON.parse(JSON.stringify(defaultFormat));
+    },
+    set defaultFormat(v) {
+        defaultFormat = timeparser.parse(v);
+    },
     /**
      * @description Adds one or more lengths of time together and returns the
        resulting time length using the same format as the first time supplied.
@@ -18,7 +94,7 @@ var time = {
      * @returns {string} The result of adding all of the supplied times together
      * @contributors Joshua Gammage
      */
-    add(times, format = this.defaultFormat) {
+    add(times, format = defaultFormat) {
         
     },
     /**
