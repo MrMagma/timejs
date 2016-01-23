@@ -63,17 +63,17 @@ let util = {
                 }
             };
             
-            parseTokens(tokens, node.test, (token, tokens) => {
+            this.parseTokens(tokens, node.test, (token, tokens) => {
                 return (token.type === "CodeClose" || (token.type === "Keyword" &&
                     token.keyword === "THEN"));
             });
             
-            parseTokens(tokens, node.consequent, (token) => {
+            this.parseTokens(tokens, node.consequent, (token) => {
                 return (token.type === "CodeClose" || (token.type === "Keyword" &&
                     token.keyword === "ELSE"));
             });
             
-            parseTokens(tokens, node.alternate, (token) => {
+            this.parseTokens(tokens, node.alternate, (token) => {
                 return (token.type === "CodeClose");
             });
             
@@ -132,7 +132,7 @@ let util = {
             body: []
         };
         
-        parseTokens(tokens, node, token => token.type === "CodeClose");
+        this.parseTokens(tokens, node, token => token.type === "CodeClose");
         
         root.body.push(node);
     },
@@ -154,15 +154,13 @@ let util = {
             let token = tokens.shift();
             
             if (token.type === "Comparator") {
-                parseComparator(token, tokens, root);
+                this.parseComparator(token, tokens, root);
             } else if (token.type === "CodeOpen") {
-                parseBlock(token, tokens, root);
+                this.parseBlock(token, tokens, root);
             } else if (token.type === "Keyword") {
-                parseKeyword(token, tokens, root);
+                this.parseKeyword(token, tokens, root);
             } else if (token.type !== "CodeClose") {
-                let parsed = parseToken(token);
-                
-                root.body.push(parsed);
+                root.body.push(this.parseToken(token));
             }
         }
         
@@ -190,7 +188,7 @@ var timeparser = {
             tokens = timetokenizer.tokenize(time);
         }
         
-        let ast = parseTokens(tokens);
+        let ast = util.parseTokens(tokens);
         
         return ast;
     }

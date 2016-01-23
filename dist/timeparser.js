@@ -67,15 +67,15 @@ var util = {
                 }
             };
 
-            parseTokens(tokens, node.test, function (token, tokens) {
+            this.parseTokens(tokens, node.test, function (token, tokens) {
                 return token.type === "CodeClose" || token.type === "Keyword" && token.keyword === "THEN";
             });
 
-            parseTokens(tokens, node.consequent, function (token) {
+            this.parseTokens(tokens, node.consequent, function (token) {
                 return token.type === "CodeClose" || token.type === "Keyword" && token.keyword === "ELSE";
             });
 
-            parseTokens(tokens, node.alternate, function (token) {
+            this.parseTokens(tokens, node.alternate, function (token) {
                 return token.type === "CodeClose";
             });
 
@@ -135,7 +135,7 @@ var util = {
             body: []
         };
 
-        parseTokens(tokens, node, function (token) {
+        this.parseTokens(tokens, node, function (token) {
             return token.type === "CodeClose";
         });
 
@@ -164,15 +164,13 @@ var util = {
             var token = tokens.shift();
 
             if (token.type === "Comparator") {
-                parseComparator(token, tokens, root);
+                this.parseComparator(token, tokens, root);
             } else if (token.type === "CodeOpen") {
-                parseBlock(token, tokens, root);
+                this.parseBlock(token, tokens, root);
             } else if (token.type === "Keyword") {
-                parseKeyword(token, tokens, root);
+                this.parseKeyword(token, tokens, root);
             } else if (token.type !== "CodeClose") {
-                var parsed = parseToken(token);
-
-                root.body.push(parsed);
+                root.body.push(this.parseToken(token));
             }
         }
 
@@ -201,7 +199,7 @@ var timeparser = {
             tokens = timetokenizer.tokenize(time);
         }
 
-        var ast = parseTokens(tokens);
+        var ast = util.parseTokens(tokens);
 
         return ast;
     }
