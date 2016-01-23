@@ -6,77 +6,14 @@
 
 var _ = require("underscore");
 var timeunits = require("./timeunits.js");
-var timeparser = require("./timeparser.js");
+var timeformat = require("./timeformat.js");
 
-let regexes = {
-    number: /[\+\-]{0,1}(?:[0-9]*\.[0-9]+|[0-9]+)(?:e[\+\-]{0,1}[0-9]*|)/
-};
+var defaultFormat = timeformat.create("{IF hrs THEN hrs ELSE ''} {IF m then m else ''}");
 
-class Format {
-    constructor(cfg = {}) {
-        let {regex, references = []} = cfg;
-        this.regex = new RegExp(regex);
-        this.raw = regex;
-        this.references = references;
-    }
-    unformat(str) {
-        let match = str.match(this.regex);
-        // For some reason Babel doesn't like if we name this variable "format"
-        let formatData = {};
-        
-        if (match !== null) {
-            for (let i = 0; i < this.references.length; i++) {
-                formatData[this.references[i]] = match[i + 1];
-            }
-        }
-        
-        return formatData;
-    }
-    format() {
-        
-    }
-    static create(ast) {
-        let regex = "";
-        let references = [];
-        
-        for (let node of ast.body) {
-            if (node.type === "StringLiteral" ||
-                node.type === "IntegerLiteral") {
-                regex += escapeRegexChars(node.value);
-            } else if (node.type === "NamedReference") {
-                regex += `(${regexes.number.source})`;
-                references.push(node.reference);
-            } else if (node.type === "ConditionalStatement") {
-                let conseqCapture = Format.create(node.consequent);
-                let altCapture = Format.create(node.alternate);
-                
-                regex += `(?:${conseqCapture.raw}|${altCapture.raw})`;
-                references = references.concat(conseqCapture.references)
-                    .concat(altCapture.references);
-            } else if (node.type === "TemplateBlock") {
-                let capture = Format.create(node);
-                regex += capture.raw;
-                references = references.concat(capture.references);
-            }
-        }
-        
-        return new Format({
-            regex: regex,
-            references: references
-        });
-    }
-}
-
-function escapeRegexChars(str) {
-    return str.replace(/\\|\^|\$|\*|\+|\?|\.|\(|\)|\:|\=|\!|\||\{|\}|\,|\[|\]/,
-        "\\$&");
-}
-
-var defaultFormat = timeparser.parse("{IF yr THEN yr ELSE ''} {IF m then m else ''}");
-
-var defaultCapture = Format.create(defaultFormat);
-
-console.log(defaultCapture.unformat("2 .35e-7"));
+console.log(defaultFormat.format({
+    hrs: "7",
+    m: "2"
+}));
 
 var time = {
     get defaultFormat() {

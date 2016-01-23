@@ -81,7 +81,7 @@ var timetokenizer = {
      * @contributors Joshua Gammage
      */
     isComparatorStart(charCode) {
-        return charCode >= 60 && charCode <= 62;
+        return (charCode >= 60 && charCode <= 62) || charCode === 33;
     },
     /**
      * @description Utility method for determining whether a given character is
@@ -206,7 +206,7 @@ var timetokenizer = {
         };
     },
     /**
-     * @description Parses logical comparators such as "<", "=", and ">="
+     * @description Parses logical comparators such as "<", "=", ">=", and "!="
      * @returns {object} A token representing the logical comparator parsed
      * @contributors Joshua Gammage
      */
@@ -214,7 +214,7 @@ var timetokenizer = {
         let raw = dat.time[dat.ind];
         let start = dat.ind;
         
-        if ((raw === "<" || raw === ">") &&
+        if ((raw === "<" || raw === ">" || raw === "!") &&
             this.isComparatorEnd(dat.time.charCodeAt(dat.ind + 1))) {
             ++dat.ind;
             raw += dat.time[dat.ind];

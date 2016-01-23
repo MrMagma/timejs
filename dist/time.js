@@ -1,9 +1,5 @@
 "use strict";
 
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
 /**
  * @fileOverview The base time object which is exposed to the global scope
  * @author Joshua Gammage
@@ -12,107 +8,14 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
 var _ = require("underscore");
 var timeunits = require("./timeunits.js");
-var timeparser = require("./timeparser.js");
+var timeformat = require("./timeformat.js");
 
-var regexes = {
-    number: /[\+\-]{0,1}(?:[0-9]*\.[0-9]+|[0-9]+)(?:e[\+\-]{0,1}[0-9]*|)/
-};
+var defaultFormat = timeformat.create("{IF hrs THEN hrs ELSE ''} {IF m then m else ''}");
 
-var Format = function () {
-    function Format() {
-        var cfg = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
-
-        _classCallCheck(this, Format);
-
-        var regex = cfg.regex;
-        var _cfg$references = cfg.references;
-        var references = _cfg$references === undefined ? [] : _cfg$references;
-
-        this.regex = new RegExp(regex);
-        this.raw = regex;
-        this.references = references;
-    }
-
-    _createClass(Format, [{
-        key: "format",
-        value: function format(str) {
-            var match = str.match(this.regex);
-            // For some reason Babel doesn't like if we name this variable "format"
-            var formatData = {};
-
-            if (match !== null) {
-                for (var i = 0; i < this.references.length; i++) {
-                    formatData[this.references[i]] = match[i + 1];
-                }
-            }
-
-            return formatData;
-        }
-    }], [{
-        key: "create",
-        value: function create(ast) {
-            var regex = "";
-            var references = [];
-
-            var _iteratorNormalCompletion = true;
-            var _didIteratorError = false;
-            var _iteratorError = undefined;
-
-            try {
-                for (var _iterator = ast.body[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-                    var node = _step.value;
-
-                    if (node.type === "StringLiteral" || node.type === "IntegerLiteral") {
-                        regex += escapeRegexChars(node.value);
-                    } else if (node.type === "NamedReference") {
-                        regex += "(" + regexes.number.source + ")";
-                        references.push(node.reference);
-                    } else if (node.type === "ConditionalStatement") {
-                        var conseqCapture = Format.create(node.consequent);
-                        var altCapture = Format.create(node.alternate);
-
-                        regex += "(?:" + conseqCapture.raw + "|" + altCapture.raw + ")";
-                        references = references.concat(conseqCapture.references).concat(altCapture.references);
-                    } else if (node.type === "TemplateBlock") {
-                        var capture = Format.create(node);
-                        regex += capture.raw;
-                        references = references.concat(capture.references);
-                    }
-                }
-            } catch (err) {
-                _didIteratorError = true;
-                _iteratorError = err;
-            } finally {
-                try {
-                    if (!_iteratorNormalCompletion && _iterator.return) {
-                        _iterator.return();
-                    }
-                } finally {
-                    if (_didIteratorError) {
-                        throw _iteratorError;
-                    }
-                }
-            }
-
-            return new Format({
-                regex: regex,
-                references: references
-            });
-        }
-    }]);
-
-    return Format;
-}();
-
-function escapeRegexChars(str) {
-    return str.replace(/\\|\^|\$|\*|\+|\?|\.|\(|\)|\:|\=|\!|\||\{|\}|\,|\[|\]/, "\\$&");
-}
-
-var defaultFormat = timeparser.parse("{IF yr THEN yr ELSE ''} {IF m then m else ''}");
-
-var defaultCapture = Format.create(defaultFormat);
-
-console.log(defaultCapture.format("2 .35e-7"));
+console.log(defaultFormat.format({
+    hrs: "7",
+    m: "2"
+}));
 
 var time = {
     get defaultFormat() {
