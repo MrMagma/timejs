@@ -8,46 +8,63 @@ var _ = require("underscore");
 var timeunits = require("./timeunits.js");
 var timeformat = require("./timeformat.js");
 
-var defaultFormat = timeformat.create("{IF hrs THEN hrs ELSE ''} {IF m then m else ''}");
-
-console.log(defaultFormat.format({
-    hrs: "7",
-    m: "2"
-}));
+var util = {
+    parseFormatString(str) {
+        if (str.length !== 0 && str[0] === "$") {
+            let key = str.slice(1);
+            
+            return timeformat.getFormat(key);
+        } else {
+            let format = timeformat.getFormat(str);
+            
+            if (format) {
+                return format;
+            } else {
+                format = timeformat.create(str);
+                timeformat.define(str, format);
+                
+                return format;
+            }
+        }
+    }
+};
 
 var time = {
-    get defaultFormat() {
-        return JSON.parse(JSON.stringify(defaultFormat));
-    },
-    set defaultFormat(v) {
-        defaultFormat = timeparser.parse(v);
-    },
     /**
      * @description Adds one or more lengths of time together and returns the
        resulting time length using the same format as the first time supplied.
      * @param {...string|string[]} times - The list of times to add together
-     * @param {string} [format=time.defaultFormat] - Specifies the format of
-       the returned time
+     * @param {string} [format="$default"] - Specifies the format of the
+       times passed in and the time to be returned
      * @returns {string} The result of adding all of the supplied times together
      * @contributors Joshua Gammage
      */
-    add(times, format = defaultFormat) {
+    add(times, format = "$default") {
+        format = util.parseFormatString(format);
         
+        let ms = 0;
+        
+        for (let time of times) {
+            ms += this.parse(time, format);
+        }
+        
+        return this.stringify(ms, format);
     },
     /**
      * @description Wrapper for the native `setTimeout` function, allowing
        intervals to be passed in the form of formatted time strings
-     * @param {function} callback - The callback to be passed to `setTimeout`
      * @param {number|string} interval - The interval to be converted and then
        passed to `setTimeout`
-     * @param {string} [format=time.defaultFormat] - Specifies the format of
+     * @param {function} callback - The callback to be passed to `setTimeout`
+     * @param {string} [format="$default"] - Specifies the format of
        the returned time
      * @param {...*} params - The extra parameters to be passed to `setTimeout`
      * @returns {number} The timeoutID returned by the call to `setTimeout`
      * @contributors Joshua Gammage
      */
-    after() {
-        
+    after(interval, callback, format="$default", ...params) {
+        params.unshift(callback, this.parse(interval, format));
+        return setTimeout.apply(global, params);
     },
     /**
      * @description Wrapper for the native `setInterval` function, allowing
@@ -55,47 +72,72 @@ var time = {
      * @param {function} callback - The callback to be passed to `setInterval`
      * @param {number|string} interval - The interval to be converted and then
        passed to `setInteval`
-     * @param {string} [format=time.defaultFormat] - Specifies the format of
-       the returned time
+     * @param {string} [format="$default"] - The format of the time to
+       be returned
      * @param {...*} params - The extra parameters to be passed to `setInteval`
      * @returns {number} The intervalID returned by the call to `setInteval`
      * @contributors Joshua Gammage
      */
-    every() {
-        
+    every(interval, callback, format="$default", ...params) {
+        params.unshift(callback, this.parse(interval, format));
+        return setInterval.apply(global, params);
     },
     /**
-     * @description Converts a length of time to a formatted string
+     * @description Converts a time from one format to another
      * @param {string|number} time - The time to format
-     * @param {string} [format=time.defaultFormat] - The format of the time to
-       be returned
-     * @returns {string} The formatted time value
+     * @param {string} [toFormat="$default"] - The format of `time`
+     * @param {string} [fromFormat="$default"] - The format to return `time` in.
+     * @returns {string} `time` formatted with the `toFormat` format.
      * @contributors Joshua Gammage
      */
-    format() {
-        
+    format(time, toFormat = "$default", fromFormat = "$default") {
+        return this.stringify(this.parse(time, fromFormat), toFormat);
     },
     /**
      * @description Takes in a formatted length of time and converts it to
        milliseconds
      * @param {string} formattedTime - The formatted time string to convert to
        milliseconds
+     * @param {string} [format="$default"] - The format of the time to be parsed
      * @returns {number} The result of converting the time to milliseconds
      * @contributors Joshua Gammage
      */
-    parse() {
+    parse(formattedTime, format = "$default") {
+        if (_.isNumber(formattedTime)) {
+            return formattedTime;
+        }
+        if (!_.isString(formattedTime)) {
+            return;
+        }
+        format = util.parseFormatString(format);
         
+        let timeData = format.unformat(formattedTime);
+        let ms = 0;
+        
+        for (let unit in timeData) {
+            if (timeData.hasOwnProperty(unit)) {
+                ms += timeunits.convert(timeData[unit], unit, "millisecond");
+            }
+        }
+        
+        return ms;
     },
     /**
      * @description Takes in a length of time measured in milliseconds and
        converts it to a formatted string.
      * @param {number} ms - The length of time, in milliseconds, to format
-     * @param {string} [format=time.defaultFormat] - The format of the time to
+     * @param {string} [format="$default"] - The format of the time to
        be returned
      * @returns {string} A string representing the formatted time
      * @contributors Joshua Gammage
      */
-    stringify() {
+    stringify(ms, format = "$default") {
+        if (!_.isNumber(ms)) {
+            return;
+        }
+        format = util.parseFormatString(format);
+        
+        let units = format.references;
         
     },
     /**
@@ -104,16 +146,39 @@ var time = {
        time supplied.
      * @param {...string|string[]} times - The list of times to subtract from
        each other
-     * @param {string} [format=time.defaultFormat] - Specifies the format of
-       the returned time
+     * @param {string} [format="$default"] - The format of the time to
+       be returned
      * @returns {string} The result of subtracting all supplied times from each
        other
      * @contributors Joshua Gammage
      */
-    subtract() {
+    subtract(times, format = "$default") {
+        format = util.parseFormatString(format);
         
+        let ms = this.parse(times.shift(), format);
+        
+        for (let time of times) {
+            ms += this.parse(time, format);
+        }
+        
+        return this.stringify(ms, format);
+    },
+    /**
+     * @description Defines a new format for use with the "$format" pattern.
+     * @param {string} name - The name of the format to be created.
+     * @param {string} value - The value of the format to define.
+     * @contributors Joshua Gammage
+     */
+    defineFormat(name, value) {
+        timeformat.define(name, value);
     }
 };
+
+timeformat.define("default",
+    "{if hrs then hrs ' hour' else ''}{if hrs != 1 then 's' else ''}" +
+    "{if hrs mins then ' ' else ''}{if mins then mins ' minute' else ''}" +
+    "{if mins != 1 then 's' else ''}{if mins secs then ' ' else ''}" +
+    "{if secs then secs ' second' else ''}{if secs != 1 then 's' else ''}");
 
 timeunits.update({
     name: "millisecond",
@@ -124,14 +189,14 @@ timeunits.define({
     name: "second",
     base: "millisecond",
     scale: 1000,
-    aliases: ["seconds", "sec", "s"]
+    aliases: ["seconds", "secs", "sec", "s"]
 });
 
 timeunits.define({
     name: "minute",
     base: "second",
     scale: 60,
-    aliases: ["minutes", "min", "m"]
+    aliases: ["minutes", "mins", "min", "m"]
 });
 
 timeunits.define({

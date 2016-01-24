@@ -8,7 +8,7 @@ var uglify = require("gulp-uglify");
 gulp.task("build-node", function() {
     return gulp.src("src/**/*.js")
         .pipe(babel())
-        .pipe(gulp.dest("dist"))
+        .pipe(gulp.dest("dist"));
 });
 
 gulp.task("build-browser", function() {

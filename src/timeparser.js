@@ -108,7 +108,7 @@ let util = {
         let boolExpr = {
             type: "BooleanExpression",
             left: left,
-            right: parseToken(right),
+            right: this.parseToken(right),
             operator: token.operator
         };
         

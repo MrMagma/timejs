@@ -5,6 +5,10 @@ let regexes = {
     number: /[\+\-]{0,1}(?:[0-9]*\.[0-9]+|[0-9]+)(?:e[\+\-]{0,1}[0-9]*|)/
 };
 
+let formats = {
+    
+};
+
 let util = {
     escapeRegexChars(str) {
         return str.replace(/\\|\^|\$|\*|\+|\?|\.|\(|\)|\:|\=|\!|\||\{|\}|\,|\[|\]/,
@@ -55,10 +59,11 @@ let util = {
             }
         } else if (type === "Predicate") {
             for (let child of node.body) {
-                if (!!this.evalNode(child, data)) {
-                    return true;
+                if (!this.evalNode(child, data)) {
+                    return false;
                 }
             }
+            return true;
         }
     }
 };
@@ -90,15 +95,17 @@ class Format {
         for (let node of ast.body) {
             if (node.type === "StringLiteral" ||
                 node.type === "IntegerLiteral") {
-                regex += util.escapeRegexChars(node.value);
+                regex += util.escapeRegexChars(node.value.toString());
             } else if (node.type === "NamedReference") {
                 regex += `(${regexes.number.source})`;
                 references.push(node.reference);
             } else if (node.type === "ConditionalStatement") {
                 let conseqCapture = Format.create(node.consequent);
                 let altCapture = Format.create(node.alternate);
+                let conRaw = conseqCapture.raw;
+                let altRaw = altCapture.raw;
                 
-                regex += `(?:${conseqCapture.raw}|${altCapture.raw})`;
+                regex += `(?:${conRaw}|${(altRaw.length > 0) ? altRaw : ""})`;
                 references = references.concat(conseqCapture.references)
                     .concat(altCapture.references);
             } else if (node.type === "TemplateBlock") {
@@ -108,7 +115,7 @@ class Format {
             }
         }
         
-        this.regex = new RegExp(regex);
+        this.regex = new RegExp(regex + "$");
         this.raw = regex;
         this.references = references;
     }
@@ -123,14 +130,32 @@ class Format {
                 if (regexes.number.test(val)) {
                     val = Number(val);
                 }
-                formatData[this.references[i]] = val;
+                if (!_.isUndefined(val)) {
+                    formatData[this.references[i]] = val;
+                }
             }
         }
+        
+        console.log(this);
+        console.log(match);
+        console.log(formatData);
         
         return formatData;
     }
     static create() {
         return new Format(arguments[0]);
+    }
+    static define(key, v) {
+        if (!_.isObject(v) || v.constructor !== Format) {
+            formats[key] = new Format(v);
+        } else {
+            formats[key] = v;
+        }
+    }
+    static getFormat(key) {
+        if (formats.hasOwnProperty(key)) {
+            return formats[key];
+        }
     }
 }
 

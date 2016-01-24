@@ -78,6 +78,36 @@ var timeunits = {
     },
 
     /**
+     * @description Converts a value measured in one time unit to an equal
+       value measured in another time unit.
+     * @param {number} value - The amount of the unit to be converted from.
+     * @param {string} fromUnit - The time unit to convert from.
+     * @param {string} toUnit - The time unit to convert to.
+     * @returns The converted value.
+     * @contributors Joshua Gammage
+     */
+    convert: function convert(value, fromUnit, toUnit) {
+        if (!units.hasOwnProperty(fromUnit) || !units.hasOwnProperty(toUnit)) {
+            throw new Error("Time unit does not exist");
+        }
+        fromUnit = units[fromUnit];
+        toUnit = units[toUnit];
+
+        while (fromUnit.base !== null) {
+            value *= fromUnit.scale;
+            fromUnit = units[fromUnit.base];
+        }
+
+        var div = 1;
+        while (toUnit.base !== null) {
+            div *= toUnit.scale;
+            toUnit = units[toUnit.base];
+        }
+
+        return value / div;
+    },
+
+    /**
      * @description Defines a new time unit for use in time strings
      * @param {object} data - Contains data about the time unit, its name,
        its aliases, the base unit, and what factor it scales the base unit by

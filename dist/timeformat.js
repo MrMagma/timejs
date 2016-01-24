@@ -11,6 +11,8 @@ var regexes = {
     number: /[\+\-]{0,1}(?:[0-9]*\.[0-9]+|[0-9]+)(?:e[\+\-]{0,1}[0-9]*|)/
 };
 
+var formats = {};
+
 var util = {
     escapeRegexChars: function escapeRegexChars(str) {
         return str.replace(/\\|\^|\$|\*|\+|\?|\.|\(|\)|\:|\=|\!|\||\{|\}|\,|\[|\]/, "\\$&");
@@ -87,8 +89,8 @@ var util = {
                 for (var _iterator2 = node.body[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
                     var child = _step2.value;
 
-                    if (!!this.evalNode(child, data)) {
-                        return true;
+                    if (!this.evalNode(child, data)) {
+                        return false;
                     }
                 }
             } catch (err) {
@@ -105,6 +107,8 @@ var util = {
                     }
                 }
             }
+
+            return true;
         }
     }
 };
@@ -151,15 +155,17 @@ var Format = function () {
                     var node = _step3.value;
 
                     if (node.type === "StringLiteral" || node.type === "IntegerLiteral") {
-                        regex += util.escapeRegexChars(node.value);
+                        regex += util.escapeRegexChars(node.value.toString());
                     } else if (node.type === "NamedReference") {
                         regex += "(" + regexes.number.source + ")";
                         references.push(node.reference);
                     } else if (node.type === "ConditionalStatement") {
                         var conseqCapture = Format.create(node.consequent);
                         var altCapture = Format.create(node.alternate);
+                        var conRaw = conseqCapture.raw;
+                        var altRaw = altCapture.raw;
 
-                        regex += "(?:" + conseqCapture.raw + "|" + altCapture.raw + ")";
+                        regex += "(?:" + conRaw + "|" + (altRaw.length > 0 ? altRaw : "") + ")";
                         references = references.concat(conseqCapture.references).concat(altCapture.references);
                     } else if (node.type === "TemplateBlock") {
                         var capture = Format.create(node);
@@ -182,7 +188,7 @@ var Format = function () {
                 }
             }
 
-            this.regex = new RegExp(regex);
+            this.regex = new RegExp(regex + "$");
             this.raw = regex;
             this.references = references;
         }
@@ -199,9 +205,15 @@ var Format = function () {
                     if (regexes.number.test(val)) {
                         val = Number(val);
                     }
-                    formatData[this.references[i]] = val;
+                    if (!_.isUndefined(val)) {
+                        formatData[this.references[i]] = val;
+                    }
                 }
             }
+
+            console.log(this);
+            console.log(match);
+            console.log(formatData);
 
             return formatData;
         }
@@ -209,6 +221,22 @@ var Format = function () {
         key: "create",
         value: function create() {
             return new Format(arguments[0]);
+        }
+    }, {
+        key: "define",
+        value: function define(key, v) {
+            if (!_.isObject(v) || v.constructor !== Format) {
+                formats[key] = new Format(v);
+            } else {
+                formats[key] = v;
+            }
+        }
+    }, {
+        key: "getFormat",
+        value: function getFormat(key) {
+            if (formats.hasOwnProperty(key)) {
+                return formats[key];
+            }
         }
     }]);
 
