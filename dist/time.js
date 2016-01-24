@@ -139,6 +139,16 @@ var time = {
     },
 
     /**
+     * @description Cross browser utility for getting the number of milliseconds
+       since January 1st 1970.
+     * @returns {number} The number of milliseconds since January 1st 1970
+     * @contributors Joshua Gammage
+     */
+    now: function now() {
+        return new Date().getTime();
+    },
+
+    /**
      * @description Takes in a formatted length of time and converts it to
        milliseconds
      * @param {string} formattedTime - The formatted time string to convert to
@@ -235,6 +245,20 @@ var time = {
         }
 
         return this.stringify(ms, format);
+    },
+
+    /**
+     * @description Wrapper for the native `Date` class simply for convenience.
+     * @param {...*} args - The arguments to pass to the `Date` constructor.
+     * @returns The number of milliseconds between the given date and January
+       1st 1970
+     */
+    then: function then() {
+        for (var _len3 = arguments.length, args = Array(_len3), _key3 = 0; _key3 < _len3; _key3++) {
+            args[_key3] = arguments[_key3];
+        }
+
+        return Date.apply({}, args).getTime();
     },
 
     /**
