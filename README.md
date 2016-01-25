@@ -54,6 +54,18 @@ Converts a formatted time string (or integer value) into another format and retu
 
 * Argument explanations coming soon!
 
+## now method
+
+#### Description
+
+Cross-browser version of `Date.now()`. Gets the number of milliseconds between January 1st 1970 and the moment the method is called.
+
+#### Usage
+
+`time.now()`
+
+* Argument explanations coming soon!
+
 ## parse method
 
 #### Description
@@ -84,9 +96,21 @@ Functions similarly to the native `JSON.stringify`, taking in a value in millise
 
 Subtracts one or more time values from each other and returns the result of the operation.
 
-#### Usage method
+#### Usage
 
 `time.subtract(base[, sub1[, sub2[, ...subN[, format]]]])`
+
+* Argument explanations coming soon!
+
+## then method
+
+#### Description
+
+A utility method for getting the number of milliseconds between January 1st 1970 and a date.
+
+#### Usage
+
+`time.then(date)`
 
 * Argument explanations coming soon!
 
