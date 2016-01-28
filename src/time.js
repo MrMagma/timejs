@@ -67,6 +67,91 @@ var time = {
         return setTimeout.apply(global, params);
     },
     /**
+     * @description Returns a human friendly string representing how ago a
+       moment was. i.e. "about 3 weeks ago", "less than a minute ago", etc.
+     * @param {number|string} moment - The moment, represented as either a UTC
+       string or an integer representing a number of milliseconds since
+       January 1st 1970, to base our calculations off of.
+     * @returns {string} The human-friendly representation of the amount of time
+       between now and the given moment.
+     * @contributors Joshua Gammage
+     */
+    ago(moment) {
+        moment = (new Date(moment)).getTime();
+        
+        let now = time.now();
+        let suffix = "";
+        
+        if (moment < now) {
+            suffix = "ago";
+        } else {
+            suffix = "from now";
+        }
+        
+        return `${time.between(moment, now)} ${suffix}`;
+    },
+    /**
+     * @description Returns a human-friendly representation of the time between
+       two moments.
+     * @param {number|string} moment1 - A number of milliseconds since January
+       1st 1970 or a UTC date string.
+     * @param {number|string} moment1 - A number of milliseconds since January
+       1st 1970 or a UTC date string.
+     * @returns {string} The human-friendly representation of the amount of time 
+       from moment1 to moment2
+     * @contributors Joshua Gammage
+     */
+    between(moment1, moment2) {
+        moment1 = (new Date(moment1)).getTime();
+        moment2 = (new Date(moment2)).getTime();
+        
+        let millis = moment2 - moment1;
+        
+        // Do this partly because if we didn't then later on we'd be trying to
+        // divide by zero, which, contrary to what your elementary school
+        // textbook told you, is not okay.
+        if (millis === 0) {
+            return "just now";
+        }
+        
+        let unit = timeunits.unit("year");
+        
+        let ratio = Math.abs(millis / unit.millis);
+        
+        while (ratio < 0.85 && unit.name !== "second") {
+            unit = timeunits.unit(unit.base);
+            ratio = Math.abs(millis / unit.millis);
+        }
+        
+        let sign = millis / Math.abs(millis);
+        let num = Math.floor(ratio) * sign;
+        let baseRatio = ratio - Math.floor(ratio);
+        
+        let suffix = "",
+            prefix = "";
+        
+        if (num < 1) {
+            prefix = "less than";
+        } else if (baseRatio <= 0.85) {
+            prefix = "about";
+        } else if (baseRatio > 0.85) {
+            prefix = "less than";
+            num += sign;
+        }
+        
+        let numStr = (num * sign);
+        let unitSuffix = "";
+        
+        if (numStr === 0 || numStr === 1) {
+            numStr = ["a", "e", "i", "o", "u"].indexOf(unit.name[0]) !== -1 ?
+                "an" : "a";
+        } else if (num !== 1) {
+            unitSuffix = "s";
+        }
+        
+        return `${prefix} ${numStr} ${unit.name}${unitSuffix}`;
+    },
+    /**
      * @description Wrapper for the native `setInterval` function, allowing
        intervals to be passed in the form of formatted time strings
      * @param {function} callback - The callback to be passed to `setInterval`
@@ -240,9 +325,16 @@ timeunits.define({
 });
 
 timeunits.define({
+    name: "month",
+    base: "week",
+    scale: 31/7,
+    aliases: ["months"]
+});
+
+timeunits.define({
     name: "year",
-    base: "day",
-    scale: 365.25,
+    base: "month",
+    scale: 12,
     aliases: ["years", "yrs", "yr", "y"]
 });
 
@@ -255,8 +347,8 @@ timeunits.define({
 
 timeunits.define({
     name: "century",
-    base: "year",
-    scale: 100,
+    base: "decade",
+    scale: 10,
     aliases: ["centuries"]
 });
 
@@ -264,16 +356,10 @@ timeunits.define({
 // an honorable mention and a cookie.
 timeunits.define({
     name: "millenium",
-    base: "year",
-    scale: 1000,
+    base: "century",
+    scale: 10,
     aliases: ["millenia"]
 });
 
-/* 
- This is for browser environments so that people don't have to use
- require(blah) to use our module
- */
-if (typeof window !== "undefined") {
-    window.time = time;
-}
+global.time = time;
 module.exports = time;

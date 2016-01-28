@@ -8,7 +8,9 @@ var _ = require("underscore");
 
 var units = {
     millisecond: {
+        name: "millisecond",
         scale: 1,
+        millis: 1,
         base: null
     }
 };
@@ -97,7 +99,9 @@ var timeunits = {
         }
         
         units[name] = {
+            name: name,
             base: base,
+            millis: units[base].millis * scale,
             scale: scale
         };
         
@@ -132,7 +136,7 @@ var timeunits = {
             try {
                 delete units[name];
             } catch (err) {
-                
+                console.error(err);
             }
             unitNames.splice(unitNames.indexOf(name), 1);
         }
@@ -170,13 +174,19 @@ var timeunits = {
         
         let {base = units[name].base, scale = units[name].scale, alias,
             aliases} = data;
+        let baseExists = this.exists(base);
         
-        if (this.exists(base)) {
+        if (baseExists) {
             units[name].base = base;
+            units[name].millis = units[name].scale * units[base].millis;
         }
         
         if (_.isNumber(scale) && !_.isNaN(scale)) {
             units[name].scale = scale;
+            if (baseExists) {
+                units[name].millis = units[name].scale *
+                    units[units[name].base].millis;
+            }
         }
         
         // Make sure that aliases is an array for simplicity
